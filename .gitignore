@@ -161,4 +161,4 @@ cython_debug/
 
 .idea
 data
-data_access/dataplace.ini
+data_access

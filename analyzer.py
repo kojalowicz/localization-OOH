@@ -1,7 +1,7 @@
 import pandas as pd
 import argparse
 import configparser
-from packages import snowflake_data_handler, snowflake_csv_saver, co_visitation, data_cleansing
+from packages import snowflake_data_handler, snowflake_csv_saver, co_visitation, data_cleansing, repeatability
 
 
 def load_config(config_file='config.ini'):
@@ -56,14 +56,8 @@ def main():
 
     PATHS = load_config("config.ini")
 
-    print(PATHS)
-    print("-"*50)
     locations = load_data(PATHS["paths_input"])["locations"]
-    print(locations)
     locations = data_cleansing.clean_locations(locations)
-    print(locations)
-    print(PATHS["paths_output"]["locations"])
-    print("-"*50)
     data_cleansing.save_data(locations, PATHS["paths_output"]["locations"])
 
     if args.download:
@@ -92,6 +86,8 @@ def main():
         print("Creating an analysis of:")
         print("1. Movements between given locations:")
         co_visitation.create_matrix(traffic, locations)
+        print("2. Repeatability of mobile signals:")
+        repeatability.calculate_and_print_repeat_frequencies(traffic, locations)
     else:
         print("One or more required dataframes are empty. Please check your data files.")
 #
