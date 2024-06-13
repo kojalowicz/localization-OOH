@@ -1,7 +1,8 @@
 import pandas as pd
 import argparse
 import configparser
-from packages import snowflake_data_handler, snowflake_csv_saver, co_visitation, data_cleansing, repeatability
+from packages import (snowflake_data_handler, snowflake_csv_saver, co_visitation, data_cleansing, repeatability,
+                      traffic_structure)
 
 
 def load_config(config_file='config.ini'):
@@ -11,8 +12,9 @@ def load_config(config_file='config.ini'):
     # Extract paths from the config and return as a dictionary
     paths_input = {key: value for key, value in config['Paths_input'].items()}
     paths_output = {key: value for key, value in config['Paths_output'].items()}
+    jpg_output = {key: value for key, value in config['jpg_output'].items()}
 
-    return {"paths_input": paths_input, "paths_output": paths_output}
+    return {"paths_input": paths_input, "paths_output": paths_output, "jpg_output": jpg_output}
 
 def load_data(paths):
     """
@@ -52,6 +54,7 @@ def main():
     parser = argparse.ArgumentParser(description="Data Analyzer")
     parser.add_argument("-d", "--download", action="store_true", help="Download CSV files")
     parser.add_argument("-c", "--connection", action="store_true", help="Use database connection")
+    parser.add_argument("-p", "--plot", action="store_true", help="Generate and save plot as JPG")
     args = parser.parse_args()
 
     PATHS = load_config("config.ini")
@@ -88,6 +91,8 @@ def main():
         co_visitation.create_matrix(traffic, locations)
         print("2. Repeatability of mobile signals:")
         repeatability.calculate_and_print_repeat_frequencies(traffic, locations)
+        print("3. Hourly traffic structure:")
+        traffic_structure.process_and_plot_traffic_data(traffic, locations, PATHS['jpg_output']['traffic_structure'], plot=args.plot)
     else:
         print("One or more required dataframes are empty. Please check your data files.")
 #
