@@ -1,8 +1,9 @@
 import pandas as pd
 import argparse
 import configparser
+from shapely import wkb
 from packages import (snowflake_data_handler, snowflake_csv_saver, co_visitation, data_cleansing, repeatability,
-                      traffic_structure)
+                      traffic_structure, demographic_structure)
 
 
 def load_config(config_file='config.ini'):
@@ -59,9 +60,11 @@ def main():
 
     PATHS = load_config("config.ini")
 
-    locations = load_data(PATHS["paths_input"])["locations"]
-    locations = data_cleansing.clean_locations(locations)
-    data_cleansing.save_data(locations, PATHS["paths_output"]["locations"])
+    #locations = load_data(PATHS["paths_input"])["locations"]
+    #locations = data_cleansing.clean_locations(locations)
+    #data_cleansing.save_data(locations, PATHS["paths_output"]["locations"])
+
+    locations = load_data(PATHS["paths_output"])["locations"]
 
     if args.download:
         print("Downloading CSV files...")
@@ -71,6 +74,11 @@ def main():
         traffic = data_frames["traffic"]
         traffic = data_cleansing.clean_traffic_data(traffic)
         data_cleansing.save_data(traffic, PATHS["paths_output"]["traffic"])
+        # Clean the population data
+        population = data_frames["population"]
+        population = data_cleansing.clean_population_data(population)
+        data_cleansing.save_data(population, PATHS["paths_output"]["population"])
+
 
     if args.connection:
         print("Processing data form snowflake...")
@@ -78,11 +86,15 @@ def main():
         # Clean the traffic data
         traffic = dataframes['DATAPLACE_TRAFFIC']
         traffic = data_cleansing.clean_traffic_data(traffic)
+        # Clean the population data
+        population = dataframes['DATAPLACE_POPULATION']
+        population = data_cleansing.clean_population_data(population)
 
     else:
         print("Processing data from files...")
         data_frames = load_data(PATHS["paths_output"])
         traffic = data_frames['traffic']
+        population = data_frames["population"]
 
     ## Ensure dataframes are not empty before proceeding
     if not traffic.empty and not locations.empty:
@@ -93,6 +105,9 @@ def main():
         repeatability.calculate_and_print_repeat_frequencies(traffic, locations)
         print("3. Hourly traffic structure:")
         traffic_structure.process_and_plot_traffic_data(traffic, locations, PATHS['jpg_output']['traffic_structure'], plot=args.plot)
+        print("4. Show the demographic structure:")
+        demographic_structure.analyze_and_plot_population_data(population, locations, 'Osiedle Wilanów', plot=args.plot, output_file=PATHS['jpg_output']['demographic_structure'])
+
     else:
         print("One or more required dataframes are empty. Please check your data files.")
 #

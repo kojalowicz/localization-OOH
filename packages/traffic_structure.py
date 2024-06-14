@@ -75,8 +75,8 @@ def process_and_plot_traffic_data(traffic, locations, output_jpg='hourly_structu
 
 if __name__ == "__main__":
     # Paths to data files
-    traffic_csv_path = 'data/DATAPLACE_TRAFFIC.csv'
-    locations_parquet_path = 'data/Dataplace_locations.parquet'
+    traffic_csv_path = 'TRAFFIC.csv'
+    locations_parquet_path = 'locations.parquet'
 
     # Load data
     traffic = pd.read_csv(traffic_csv_path)

@@ -143,10 +143,10 @@ def calculate_and_print_repeat_frequencies(traffic, locations):
 
 if __name__ == "__main__":
     # Define the path to the traffic CSV file
-    traffic_path = "../data/DATAPLACE_TRAFFIC_CLEANED_old.csv"
+    traffic_path = "TRAFFIC.csv"
 
     # Define the path to the locations Parquet file
-    locations_path = '../data/Dataplace_locations.parquet'
+    locations_path = 'locations.parquet'
 
     traffic, locations = load_data(traffic_path, locations_path)
 
