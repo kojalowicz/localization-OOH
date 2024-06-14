@@ -177,7 +177,7 @@ def plot_demographic_pyramid(demographic_distribution, location_name, output_fil
     plt.savefig(output_file)
     plt.close()
 
-def analyze_and_plot_population_data(population_data, locations, location_name, plot=True, output_file='demographic_pyramid.jpg'):
+def analyze_and_plot_population_data(population_data, locations, location_name, output_file='demographic_pyramid.jpg', plot=True):
     # Analyze population data for location
     analyzed_population_data = analyze_population_in_location(population_data, locations, location_name)
 
