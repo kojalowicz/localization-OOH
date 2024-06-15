@@ -3,7 +3,7 @@ import argparse
 import configparser
 from shapely import wkb
 from packages import (snowflake_data_handler, snowflake_csv_saver, co_visitation, data_cleansing, repeatability,
-                      traffic_structure, demographic_structure, buildings_characteristics)
+                      traffic_structure, demographic_structure, buildings_characteristics, residence_work)
 
 
 def load_config(config_file='config.ini'):
@@ -110,6 +110,9 @@ def main():
     demographic_structure_output_file = PATHS['jpg_output']['demographic_structure']
     location_for_population_analysis = PATHS['analysis']['location_for_population_analysis']
     buildings_analysis_prefix = PATHS['jpg_output']['buildings_analysis_prefix']
+    work_location = PATHS['analysis']['user_work_location']
+    commute_location = PATHS['analysis']['user_commute_location']
+    home_location = PATHS['analysis']['user_home_location']
 
 
     ## Ensure dataframes are not empty before proceeding
@@ -146,6 +149,38 @@ def main():
             save_to_file=args.plot,
             prefix=buildings_analysis_prefix
             )
+        print("6. Estimating the likely place of residence and work")
+
+        #data_frames = load_data(PATHS["paths_output"])
+        traffic = load_data(PATHS["paths_output"])['traffic']
+        locations = load_data(PATHS["paths_output"])["locations"]
+
+        work_estimation = residence_work.analyze_travel_and_users(
+            traffic,
+            locations,
+            commute_location,
+            work_location,
+            8, 18
+        )
+
+        print(f"\nEstimated number users commuting between {work_location} and {commute_location} and probably works in {work_location}:")
+        print(len(work_estimation['estimated_locations']))
+        print('Number of trips between these locations:')
+        print(len(work_estimation['travel']))
+
+        residence_estimation = residence_work.analyze_travel_and_users(
+            traffic,
+            locations,
+            commute_location,
+            home_location,
+            22, 5
+        )
+
+        print(f"\nEstimated number users commuting between {home_location} and {commute_location} and probably living in {home_location}:")
+        print(len(residence_estimation['estimated_locations']))
+        print('Number of trips between these locations:')
+        print(len(residence_estimation['travel']))
+
     else:
         print("One or more required dataframes are empty. Please check your data files.")
 #
