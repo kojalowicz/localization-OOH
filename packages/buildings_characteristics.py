@@ -3,6 +3,7 @@ import pygeos
 import matplotlib.pyplot as plt
 import seaborn as sns
 import re
+from unidecode import unidecode
 
 def analyze_and_display_buildings(building_data, locations, selected_locations, save_to_file=False, prefix=""):
     analysis_results = {}
@@ -84,7 +85,7 @@ def save_analysis_plot(buildings_in_location, location_name, prefix=""):
     plt.tight_layout()
 
     # Prepare filename without Polish characters and spaces replaced by underscores
-    filename = f"{prefix}{location_name.replace(' ', '_').encode('ascii', 'ignore').decode('ascii')}.jpg"
+    filename = f"{prefix}{unidecode(location_name).replace(' ', '_')}.jpg"
 
     # Save plot to file
     plt.savefig(filename)

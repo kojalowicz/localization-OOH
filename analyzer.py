@@ -4,6 +4,64 @@ import configparser
 from shapely import wkb
 from packages import (snowflake_data_handler, snowflake_csv_saver, co_visitation, data_cleansing, repeatability,
                       traffic_structure, demographic_structure, buildings_characteristics, residence_work)
+from fpdf import FPDF
+from unidecode import unidecode
+
+def append_to_pdf(pdf, content):
+    if isinstance(content, str):
+        pdf.set_font("Arial", size=12)
+        pdf.add_page()  # Always add a new page for text content
+        pdf.multi_cell(0, 10, txt=content)
+        pdf.ln()
+    elif isinstance(content, dict) and 'path' in content and content['path'].lower().endswith('.jpg'):
+        img_path = content['path']
+
+        # Calculate maximum image dimensions that fit the page
+        max_width = pdf.w - 20
+        max_height = pdf.h - 20  # Adjust as needed for margins
+
+        # Get image dimensions using PIL (Python Imaging Library)
+        from PIL import Image
+        img = Image.open(img_path)
+        img_width, img_height = img.size
+
+        # Calculate scaling factors to fit the image within page dimensions
+        width_ratio = max_width / img_width
+        height_ratio = max_height / img_height
+
+        # Use the smaller ratio to ensure the entire image fits within the page
+        scale_factor = min(width_ratio, height_ratio)
+
+        # Calculate resized dimensions
+        new_width = img_width * scale_factor
+        new_height = img_height * scale_factor
+
+        # Calculate position to center image
+        x = (pdf.w - new_width) / 2
+        y = (pdf.h - new_height) / 2
+
+        # Add a new page if no page is open
+        if pdf.page_no() == 0:
+            pdf.add_page()
+
+        # Add image to PDF
+        pdf.image(img_path, x=x, y=y, w=new_width, h=new_height)
+
+
+def create_pdf(contents, output_file):
+    pdf = FPDF()
+    new_page_added = False  # Flag to track if a new page has been added
+
+    for content in contents:
+        if isinstance(content, dict) and 'path' in content and content['path'].lower().endswith('.jpg'):
+            pdf.add_page()  # Dodanie nowej strony przed dodaniem obrazka
+            append_to_pdf(pdf, content)
+        elif content == 'new_page':
+            pdf.add_page()
+        else:
+            append_to_pdf(pdf, content)
+
+    pdf.output(output_file)
 
 
 def load_config(config_file='config.ini'):
@@ -57,6 +115,7 @@ def main():
     parser.add_argument("-d", "--download", action="store_true", help="Download CSV files")
     parser.add_argument("-c", "--connection", action="store_true", help="Use database connection")
     parser.add_argument("-p", "--plot", action="store_true", help="Generate and save plot as JPG")
+    parser.add_argument("--pdf", action="store_true", help="Save analysis to PDF")
     args = parser.parse_args()
 
     PATHS = load_config("config.ini")
@@ -114,42 +173,58 @@ def main():
     commute_location = PATHS['analysis']['user_commute_location']
     home_location = PATHS['analysis']['user_home_location']
 
-
+    content = []
     ## Ensure dataframes are not empty before proceeding
     if not traffic.empty and not locations.empty:
-        print("Creating an analysis of:")
-        print("1. Movements between given locations:")
-        co_visitation.create_matrix(
+
+
+        content.append(f"Creating an analysis of:\n")
+
+        content[0]  = content[0] + f"Movements between given locations:\n"
+        content[0]  = content[0] + str(co_visitation.create_matrix(
             traffic,
-            locations)
-        print("2. Repeatability of mobile signals:")
-        repeatability.calculate_and_print_repeat_frequencies(
+            locations))
+        print(content[-1])
+
+        content.append(f"Repeatability of mobile signals:\n")
+        content[1] = content[1] + str(repeatability.calculate_and_print_repeat_frequencies(
             traffic,
-            locations)
-        print("3. Hourly traffic structure:")
+            locations))
+        print(content[-1])
+
+        print(f"3. Hourly traffic structure:\n")
         traffic_structure.process_and_plot_traffic_data(
             traffic,
             locations,
             plot=args.plot,
             output_jpg=traffic_structure_output_file)
-        print("4. Show the demographic structure:")
+        content.append({'path': traffic_structure_output_file})
+
+        print(f"4. Show the demographic structure:\n")
         demographic_structure.analyze_and_plot_population_data(
             population,
             locations,
             location_for_population_analysis,
             plot=args.plot,
             output_file=demographic_structure_output_file)
-        print("5. Characteristics of buildings:")
+        content.append({'path': demographic_structure_output_file})
+
+        print(f"5. Characteristics of buildings:\n")
         location_names = PATHS['analysis']['location_for_buildings_analysis'].split(',')
         print(location_names)
+        print(content[-1])
         buildings_characteristics.analyze_and_display_buildings(
             buildings,
             locations,
             location_names,
             save_to_file=args.plot,
             prefix=buildings_analysis_prefix
-            )
-        print("6. Estimating the likely place of residence and work")
+        )
+        for location in location_names:
+            sanitized_location = unidecode(location).replace(' ', '_')  # Remove diacritics and replace spaces with underscores
+            content.append({'path': buildings_analysis_prefix + sanitized_location + '.jpg'})
+            #content.append('new_page')  # Dodanie oznaczenia nowej strony
+        content.append(f"Estimating the likely place of residence and work\n")
 
         work_estimation = residence_work.analyze_travel_and_users(
             traffic,
@@ -159,10 +234,10 @@ def main():
             8, 18
         )
 
-        print(f"\nEstimated number users commuting between {work_location} and {commute_location} and probably works in {work_location}:")
-        print(len(work_estimation['estimated_locations']))
-        print('Number of trips between these locations:')
-        print(len(work_estimation['travel']))
+        content[-1] = content[-1] + f"\nEstimated number users commuting between {work_location} and {commute_location} and probably works in {work_location}:\n"
+        content[-1] = content[-1] + str(len(work_estimation['estimated_locations'])) + f'\n'
+        content[-1] = content[-1] + f"Number of trips between these locations:\n"
+        content[-1] = content[-1] + str(len(work_estimation['travel'])) + f'\n'
 
         residence_estimation = residence_work.analyze_travel_and_users(
             traffic,
@@ -172,13 +247,16 @@ def main():
             22, 5
         )
 
-        print(f"\nEstimated number users commuting between {home_location} and {commute_location} and probably living in {home_location}:")
-        print(len(residence_estimation['estimated_locations']))
-        print('Number of trips between these locations:')
-        print(len(residence_estimation['travel']))
-
+        content[-1] = content[-1] + f"\nEstimated number users commuting between {home_location} and {commute_location} and probably living in {home_location}:\n"
+        content[-1] = content[-1] + str(len(residence_estimation['estimated_locations'])) + f'\n'
+        content[-1] = content[-1] + f"Number of trips between these locations:\n"
+        content[-1] = content[-1] + str(len(residence_estimation['travel'])) + f'\n'
+        print(content[-1])
     else:
         print("One or more required dataframes are empty. Please check your data files.")
-#
+
+    if args.pdf:
+        create_pdf(content, 'analysis_output.pdf')
+
 if __name__ == "__main__":
     main()

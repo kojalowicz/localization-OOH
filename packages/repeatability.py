@@ -138,8 +138,10 @@ def calculate_and_print_repeat_frequencies(traffic, locations):
     if not repeat_visits_df.empty:
         visit_frequency_summary_df = calculate_visit_frequencies(repeat_visits_df)
         print(visit_frequency_summary_df)
+        return visit_frequency_summary_df
     else:
         print("No visit frequencies to summarize.")
+
 
 if __name__ == "__main__":
     # Define the path to the traffic CSV file

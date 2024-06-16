@@ -57,14 +57,14 @@ def calculate_co_visitation(traffic, locations):
                 else:
                     co_visit_matrix.loc[loc1, loc2] = co_visits[co_visits[loc1] > 0].shape[0]
 
-        print(co_visit_matrix)
+        return co_visit_matrix
     else:
         print("The 'user_id' column does not exist in the 'traffic' data")
 
 def create_matrix(traffic, locations):
     traffic, locations = preprocess_data(traffic, locations)
     traffic = add_location_columns(traffic, locations)
-    calculate_co_visitation(traffic, locations)
+    return calculate_co_visitation(traffic, locations)
 
 if __name__ == "__main__":
     traffic_path = 'traffic.csv'
