@@ -4,15 +4,6 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import re
 
-def load_data():
-    # Load building data
-    building_data = pd.read_csv('building_data.csv')
-
-    # Load locations data
-    locations = pd.read_parquet('locations.parquet')
-
-    return building_data, locations
-
 def analyze_and_display_buildings(building_data, locations, selected_locations, save_to_file=False, prefix=""):
     analysis_results = {}
     for location_name in selected_locations:
@@ -101,7 +92,8 @@ def save_analysis_plot(buildings_in_location, location_name, prefix=""):
     plt.close()
 
 if __name__ == "__main__":
-    building_data, locations = load_data()
+    building_data = pd.read_csv('building_data.csv')
+    locations = pd.read_parquet('locations.parquet')
 
     # List of selected locations for analysis
     selected_locations = ["Mordor na Domaniewskiej", "Osiedle Wilanów"]
