@@ -151,10 +151,6 @@ def main():
             )
         print("6. Estimating the likely place of residence and work")
 
-        #data_frames = load_data(PATHS["paths_output"])
-        traffic = load_data(PATHS["paths_output"])['traffic']
-        locations = load_data(PATHS["paths_output"])["locations"]
-
         work_estimation = residence_work.analyze_travel_and_users(
             traffic,
             locations,
