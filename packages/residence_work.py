@@ -1,6 +1,5 @@
 import pandas as pd
 import pygeos
-import datetime as dt
 
 def load_data():
     # Load user traffic data

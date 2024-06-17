@@ -1,6 +1,5 @@
 import pandas as pd
 import geopandas as gpd
-from shapely.geometry import Point
 import matplotlib.pyplot as plt
 
 def match_traffic_to_location(traffic, locations):

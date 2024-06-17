@@ -1,11 +1,10 @@
 import pandas as pd
 import argparse
 import configparser
-from shapely import wkb
 from packages import (snowflake_data_handler, snowflake_csv_saver, co_visitation, data_cleansing, repeatability,
                       traffic_structure, demographic_structure, buildings_characteristics, residence_work)
 from fpdf import FPDF
-from unidecode import unidecode
+import os
 
 def append_to_pdf(pdf, content):
     if isinstance(content, str):
@@ -113,7 +112,6 @@ def get_data_frames_from_snowflake(data_access):
 def main():
     parser = argparse.ArgumentParser(description="Data Analyzer")
     parser.add_argument("-d", "--download", action="store_true", help="Download CSV files")
-    # Working in progres
     parser.add_argument("-c", "--connection", action="store_true", help="Use database connection")
     parser.add_argument("-p", "--plot", action="store_true", help="Generate and save plot as JPG")
     parser.add_argument("--pdf", action="store_true", help="Save analysis to PDF")
@@ -123,6 +121,19 @@ def main():
         args.plot=True
 
     PATHS = load_config("config.ini")
+
+    if args.download or args.connection:
+        for path in (PATHS["paths_input"], PATHS["paths_output"], PATHS["jpg_output"]):
+            os.makedirs(path['core'], exist_ok=True)
+
+        locations = load_data(PATHS["paths_input"])["locations"]
+        locations = data_cleansing.clean_locations(locations)
+        data_cleansing.save_data(locations, PATHS["paths_output"]["locations"])
+    else:
+        locations = load_data(PATHS["paths_output"])["locations"]
+
+
+
 
     if args.download:
         print("Downloading CSV files...")
@@ -161,13 +172,6 @@ def main():
         population = data_frames["population"]
         buildings = data_frames["buildings"]
 
-    if args.download or args.connection:
-        locations = load_data(PATHS["paths_input"])["locations"]
-        locations = data_cleansing.clean_locations(locations)
-        data_cleansing.save_data(locations, PATHS["paths_output"]["locations"])
-    else:
-        locations = load_data(PATHS["paths_output"])["locations"]
-
     # Defining variables
     traffic_structure_output_file = PATHS['jpg_output']['traffic_structure']
     demographic_structure_output_file = PATHS['jpg_output']['demographic_structure']
@@ -185,7 +189,6 @@ def main():
 
         print("Creating an analysis of:")
         print("Movements between given locations:")
-        print(traffic['USER_ID'])
         matrix = co_visitation.create_matrix(
             traffic,
             locations,

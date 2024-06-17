@@ -3,7 +3,6 @@ import pygeos
 import matplotlib.pyplot as plt
 import seaborn as sns
 import re
-from unidecode import unidecode
 
 def analyze_and_display_buildings(building_data, locations, selected_locations, save_to_file=False, output_file=""):
     analysis_results = {}

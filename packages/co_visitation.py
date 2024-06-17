@@ -3,7 +3,6 @@ from shapely.geometry import Point
 from shapely import wkb
 import shapely
 import matplotlib.pyplot as plt
-from PIL import Image
 
 def preprocess_data(traffic, locations):
     """
