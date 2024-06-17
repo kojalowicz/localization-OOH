@@ -259,7 +259,7 @@ def main():
         print("One or more required dataframes are empty. Please check your data files.")
 
     if args.pdf:
-        create_pdf(content_for_pdg, 'analysis_output_1.pdf')
+        create_pdf(content_for_pdg, 'analysis.pdf')
 
 if __name__ == "__main__":
     main()
