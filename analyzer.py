@@ -165,6 +165,7 @@ def main():
         population = data_frames["population"]
         buildings = data_frames["buildings"]
 
+    # Defining variables
     traffic_structure_output_file = PATHS['jpg_output']['traffic_structure']
     demographic_structure_output_file = PATHS['jpg_output']['demographic_structure']
     location_for_population_analysis = PATHS['analysis']['location_for_population_analysis']
@@ -175,7 +176,7 @@ def main():
     commute_location = PATHS['analysis']['user_commute_location']
     home_location = PATHS['analysis']['user_home_location']
 
-    content = []
+    content_for_pdg = []
     ## Ensure dataframes are not empty before proceeding
     if not traffic.empty and not locations.empty:
 
@@ -188,14 +189,14 @@ def main():
             plot=args.plot,
             output_file=matrix_jpg)
         print(matrix)
-        content.append({'path': matrix_jpg})
+        content_for_pdg.append({'path': matrix_jpg})
 
         print("Repeatability of mobile signals:")
         repeat_visits_summary, visit_frequency_summary_df  = repeatability.calculate_and_return_repeat_frequencies(
             traffic,
             locations)
         repeatability.generate_combined_top10_plot(repeat_visits_summary, visit_frequency_summary_df, top10_visit_frequencies_jpg)
-        content.append({'path': top10_visit_frequencies_jpg})
+        content_for_pdg.append({'path': top10_visit_frequencies_jpg})
         print(visit_frequency_summary_df)
 
         print("Hourly traffic structure:")
@@ -204,7 +205,7 @@ def main():
             locations,
             plot=args.plot,
             output_jpg=traffic_structure_output_file)
-        content.append({'path': traffic_structure_output_file})
+        content_for_pdg.append({'path': traffic_structure_output_file})
 
         print("Show the demographic structure:")
         demographic_structure.analyze_and_plot_population_data(
@@ -213,12 +214,12 @@ def main():
             location_for_population_analysis,
             plot=args.plot,
             output_file=demographic_structure_output_file)
-        content.append({'path': demographic_structure_output_file})
+        content_for_pdg.append({'path': demographic_structure_output_file})
 
         print("Characteristics of buildings:")
         location_names = PATHS['analysis']['location_for_buildings_analysis'].split(',')
         print(location_names)
-        print(content[-1])
+        print(content_for_pdg[-1])
         buildings_characteristics.analyze_and_display_buildings(
             buildings,
             locations,
@@ -227,9 +228,10 @@ def main():
             output_file=buildings_analysis
         )
 
-        content.append({'path': buildings_analysis})
+        content_for_pdg.append({'path': buildings_analysis})
 
-        content.append(f"Estimating the likely place of residence and work\n")
+        # Estimating the likely place of residence and work
+        content_for_pdg.append(f"Estimating the likely place of residence and work\n")
 
         work_estimation = residence_work.analyze_travel_and_users(
             traffic,
@@ -239,8 +241,8 @@ def main():
             8, 18
         )
 
-        content[-1] = content[-1] + f"\nEstimated number users commuting between {work_location} and {commute_location} and probably works in {work_location}:\n"
-        content[-1] = content[-1] + str(len(work_estimation['estimated_locations'])) + f'\n'
+        content_for_pdg[-1] = content_for_pdg[-1] + f"\nEstimated number users commuting between {work_location} and {commute_location} and probably works in {work_location}:\n"
+        content_for_pdg[-1] = content_for_pdg[-1] + str(len(work_estimation['estimated_locations'])) + f'\n'
 
         residence_estimation = residence_work.analyze_travel_and_users(
             traffic,
@@ -250,14 +252,14 @@ def main():
             22, 5
         )
 
-        content[-1] = content[-1] + f"\nEstimated number users commuting between {home_location} and {commute_location} and probably living in {home_location}:\n"
-        content[-1] = content[-1] + str(len(residence_estimation['estimated_locations'])) + f'\n'
-        print(content[-1])
+        content_for_pdg[-1] = content_for_pdg[-1] + f"\nEstimated number users commuting between {home_location} and {commute_location} and probably living in {home_location}:\n"
+        content_for_pdg[-1] = content_for_pdg[-1] + str(len(residence_estimation['estimated_locations'])) + f'\n'
+        print(content_for_pdg[-1])
     else:
         print("One or more required dataframes are empty. Please check your data files.")
 
     if args.pdf:
-        create_pdf(content, 'analysis_output_1.pdf')
+        create_pdf(content_for_pdg, 'analysis_output_1.pdf')
 
 if __name__ == "__main__":
     main()
