@@ -44,11 +44,13 @@ Run the script with the following command:
 
 ```bash
 python script.py [options]
+```
+
 Configuration
 The script uses a configuration file config.ini to manage file paths and analysis parameters. Ensure that config.ini is properly set up before running the script.
 
 Example config.ini
-
+```
 [paths_input]
 locations = input/locations.csv
 traffic = input/traffic.parquet
@@ -74,14 +76,15 @@ user_work_location = analysis/user_work_location.csv
 user_commute_location = analysis/user_commute_location.csv
 user_home_location = analysis/user_home_location.csv
 location_for_buildings_analysis = location1,location2,location3
-
+```
 Parameters
 The script accepts the following command-line parameters:
-
+```
 -d, --download: Download CSV files.
 -c, --connection: Use database connection to fetch data.
 -p, --plot: Generate and save plots as JPG.
 --pdf: Save analysis results in a PDF file. (Implied --plot)
+```
 Description
 The script performs the following tasks:
 
