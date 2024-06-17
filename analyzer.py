@@ -113,6 +113,7 @@ def get_data_frames_from_snowflake(data_access):
 def main():
     parser = argparse.ArgumentParser(description="Data Analyzer")
     parser.add_argument("-d", "--download", action="store_true", help="Download CSV files")
+    # Working in progres
     parser.add_argument("-c", "--connection", action="store_true", help="Use database connection")
     parser.add_argument("-p", "--plot", action="store_true", help="Generate and save plot as JPG")
     parser.add_argument("--pdf", action="store_true", help="Save analysis to PDF")
@@ -151,7 +152,7 @@ def main():
         population = dataframes['DATAPLACE_POPULATION']
         population = data_cleansing.clean_population_data(population)
         # Clean the buildings data
-        buildings = dataframes["buildings"]
+        buildings = dataframes["DATAPLACE_BUDB"]
         buildings = data_cleansing.clean_bud_data(buildings)
     else:
         print("Processing data from files...")
@@ -184,13 +185,14 @@ def main():
 
         print("Creating an analysis of:")
         print("Movements between given locations:")
-        matrix = co_visitation.create_matrix(
-            traffic,
-            locations,
-            plot=args.plot,
-            output_file=matrix_jpg)
-        print(matrix)
-        content_for_pdg.append({'path': matrix_jpg})
+        print(traffic['USER_ID'])
+        #matrix = co_visitation.create_matrix(
+        #    traffic,
+        #    locations,
+        #    plot=args.plot,
+        #    output_file=matrix_jpg)
+        #print(matrix)
+        #content_for_pdg.append({'path': matrix_jpg})
 
         print("Repeatability of mobile signals:")
         repeat_visits_summary, visit_frequency_summary_df  = repeatability.calculate_and_return_repeat_frequencies(
