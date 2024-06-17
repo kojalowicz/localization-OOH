@@ -104,8 +104,8 @@ def load_data(paths):
 
     return data_frames
 
-def download_csv(data_access):
-    snowflake_csv_saver.download_csv_files(data_access)
+def download_csv(data_access, input):
+    snowflake_csv_saver.download_csv_files(data_access, input)
 
 def get_data_frames_from_snowflake(data_access):
     return snowflake_data_handler.sql_to_dataframes(data_access)
@@ -118,18 +118,14 @@ def main():
     parser.add_argument("--pdf", action="store_true", help="Save analysis to PDF")
     args = parser.parse_args()
 
-    PATHS = load_config("config.ini")
+    if args.pdf:
+        args.plot=True
 
-    if args.download or args.connection:
-        locations = load_data(PATHS["paths_input"])["locations"]
-        locations = data_cleansing.clean_locations(locations)
-        data_cleansing.save_data(locations, PATHS["paths_output"]["locations"])
-    else:
-        locations = load_data(PATHS["paths_output"])["locations"]
+    PATHS = load_config("config.ini")
 
     if args.download:
         print("Downloading CSV files...")
-        download_csv('data_access/dataplace.ini')
+        download_csv('data_access/dataplace.ini', "input")
         data_frames = load_data(PATHS["paths_input"])
         # Clean the traffic data
         traffic = data_frames["traffic"]
@@ -157,13 +153,19 @@ def main():
         # Clean the buildings data
         buildings = dataframes["buildings"]
         buildings = data_cleansing.clean_bud_data(buildings)
-
     else:
         print("Processing data from files...")
         data_frames = load_data(PATHS["paths_output"])
         traffic = data_frames['traffic']
         population = data_frames["population"]
         buildings = data_frames["buildings"]
+
+    if args.download or args.connection:
+        locations = load_data(PATHS["paths_input"])["locations"]
+        locations = data_cleansing.clean_locations(locations)
+        data_cleansing.save_data(locations, PATHS["paths_output"]["locations"])
+    else:
+        locations = load_data(PATHS["paths_output"])["locations"]
 
     # Defining variables
     traffic_structure_output_file = PATHS['jpg_output']['traffic_structure']
@@ -178,8 +180,7 @@ def main():
 
     content_for_pdg = []
     ## Ensure dataframes are not empty before proceeding
-    if not traffic.empty and not locations.empty:
-
+    if not traffic.empty and not locations.empty and not buildings.empty and not population.empty:
 
         print("Creating an analysis of:")
         print("Movements between given locations:")

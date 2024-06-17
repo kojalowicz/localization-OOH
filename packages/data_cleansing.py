@@ -153,17 +153,17 @@ def clean_locations(locations_input):
 
 if __name__ == "__main__":
     # Paths to the CSV and Parquet files
-    traffic_csv_path = '../data/DATAPLACE_TRAFFIC.csv'
-    traffic_output_path = '../data/DATAPLACE_TRAFFIC_CLEANED.csv'
+    traffic_csv_path = '../input/DATAPLACE_TRAFFIC.csv'
+    traffic_output_path = '../input/DATAPLACE_TRAFFIC_CLEANED.csv'
 
-    bud_csv_path = '../data/DATAPLACE_BUDB.csv'
-    bud_output_path = '../data/DATAPLACE_BUDB_CLEANED.csv'
+    bud_csv_path = '../input/DATAPLACE_BUDB.csv'
+    bud_output_path = '../input/DATAPLACE_BUDB_CLEANED.csv'
 
-    population_csv_path = '../data/DATAPLACE_POPULATION.csv'
-    population_output_path = '../data/DATAPLACE_POPULATION_CLEANED.csv'
+    population_csv_path = '../input/DATAPLACE_POPULATION.csv'
+    population_output_path = '../input/DATAPLACE_POPULATION_CLEANED.csv'
 
-    locations_parquet_path = '../data/Dataplace_locations.parquet'
-    locations_output_path = '../data/Dataplace_locations_cleaned.parquet'
+    locations_parquet_path = '../input/Dataplace_locations.parquet'
+    locations_output_path = '../input/Dataplace_locations_cleaned.parquet'
 
     # Clean the traffic data
     traffic = load_data(traffic_csv_path)

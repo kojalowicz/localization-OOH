@@ -160,5 +160,5 @@ cython_debug/
 #.idea/
 
 .idea
-data
+input
 data_access

@@ -72,7 +72,7 @@ def save_table_to_csv(cursor, table_name, schema, database, output_dir):
     df.to_csv(file_path, index=False)
     print(f"Saved {table_name} to {file_path}")
 
-def download_csv_files(config_file):
+def download_csv_files(config_file, input):
     config = read_config(config_file)
     connection = get_connection(config)
 
@@ -87,11 +87,11 @@ def download_csv_files(config_file):
 
             for table in tables:
                 table_name = table[1]
-                save_table_to_csv(cursor, table_name, config.get('SCHEMA'), config.get('DATABASE'), "data")
+                save_table_to_csv(cursor, table_name, config.get('SCHEMA'), config.get('DATABASE'), input)
         finally:
             cursor.close()
     finally:
         connection.close()
 
 if __name__ == "__main__":
-    download_csv_files("config.ini")
+    download_csv_files("config.ini", "input")
