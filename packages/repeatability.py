@@ -196,4 +196,4 @@ if __name__ == "__main__":
     repeat_visits_summary, visit_frequency_summary_df = calculate_and_return_repeat_frequencies(traffic, locations)
 
     # Generate top 10 plots for each location and save as single JPEG
-    generate_top10_plots(repeat_visits_summary, visit_frequency_summary_df, 'top10_visit_frequencies.jpg')
+    generate_combined_top10_plot(repeat_visits_summary, visit_frequency_summary_df, 'top10_visit_frequencies.jpg')
