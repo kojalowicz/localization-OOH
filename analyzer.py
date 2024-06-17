@@ -143,7 +143,7 @@ def main():
 
 
     if args.connection:
-        print("Processing data form snowflake...")
+        print("Processing data from snowflake...")
         dataframes = get_data_frames_from_snowflake('data_access/dataplace.ini')
         # Clean the traffic data
         traffic = dataframes['DATAPLACE_TRAFFIC']

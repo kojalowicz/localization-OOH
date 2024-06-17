@@ -39,13 +39,6 @@ def remove_missing_values(data, key_columns):
     print("Rows with missing values removed.")
     return data
 
-def convert_to_datetime(data, column):
-    """Convert a column to datetime format and remove invalid dates."""
-    data[column] = pd.to_datetime(data[column], errors='coerce')
-    data = data.dropna(subset=[column])
-    print("Invalid dates removed.")
-    return data
-
 def validate_coordinates(data, lat_col='LAT', lng_col='LNG'):
     """Remove rows with invalid latitude/longitude values."""
     data = data[(data[lng_col] >= -180) & (data[lng_col] <= 180) &
@@ -85,7 +78,6 @@ def clean_traffic_data(traffic_input):
     traffic = remove_duplicates(traffic_input)
     key_columns = ['USER_ID', 'OCCURED_AT', 'LONGITUDE', 'LATITUDE']
     traffic = remove_missing_values(traffic, key_columns)
-    traffic = convert_to_datetime(traffic, 'OCCURED_AT')
     traffic = validate_coordinates(traffic, 'LATITUDE', 'LONGITUDE')
     traffic = remove_zero_coordinates(traffic, 'LATITUDE', 'LONGITUDE')
     return traffic
@@ -105,10 +97,6 @@ def clean_bud_data(bud_input):
     # Remove rows with invalid LICZBAKONDYGNACJI or AREA
     bud = bud.dropna(subset=['LICZBAKONDYGNACJI', 'AREA'])
     print("Invalid LICZBAKONDYGNACJI or AREA values removed.")
-
-    # Apply wkb_to_geometry function to GEOMETRY column
-    bud.loc[:, 'GEOMETRY'] = bud['GEOMETRY'].apply(wkb_to_geometry)
-    print("Invalid GEOMETRY values removed.")
 
     return bud
 
