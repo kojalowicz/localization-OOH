@@ -186,13 +186,13 @@ def main():
         print("Creating an analysis of:")
         print("Movements between given locations:")
         print(traffic['USER_ID'])
-        #matrix = co_visitation.create_matrix(
-        #    traffic,
-        #    locations,
-        #    plot=args.plot,
-        #    output_file=matrix_jpg)
-        #print(matrix)
-        #content_for_pdg.append({'path': matrix_jpg})
+        matrix = co_visitation.create_matrix(
+            traffic,
+            locations,
+            plot=args.plot,
+            output_file=matrix_jpg)
+        print(matrix)
+        content_for_pdg.append({'path': matrix_jpg})
 
         print("Repeatability of mobile signals:")
         repeat_visits_summary, visit_frequency_summary_df  = repeatability.calculate_and_return_repeat_frequencies(
@@ -218,6 +218,13 @@ def main():
             plot=args.plot,
             output_file=demographic_structure_output_file)
         content_for_pdg.append({'path': demographic_structure_output_file})
+
+        demographic_structure.analyze_and_plot_population_data(
+            population,
+            locations,
+            "Mordor na Domaniewskiej",
+            plot=args.plot,
+            output_file="demographic_structure_Domaniewska.jpg")
 
         print("Characteristics of buildings:")
         location_names = PATHS['analysis']['location_for_buildings_analysis'].split(',')

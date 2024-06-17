@@ -1,0 +1,11 @@
+pandas
+pygeos
+matplotlib
+seaborn
+unidecode
+shapely
+Pillow
+geopandas
+snowflake-connector-python
+fpdf
+configparser
