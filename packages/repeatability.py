@@ -1,7 +1,9 @@
-import pandas as pd
 from shapely.geometry import Point
 from shapely import wkb
 import shapely
+import matplotlib.pyplot as plt
+import seaborn as sns
+import pandas as pd
 
 def load_data(traffic_path, locations_path):
     """
@@ -116,10 +118,19 @@ def calculate_visit_frequencies(repeat_visits_df):
     visit_frequency_summary_df = pd.concat(visit_frequency_summary, ignore_index=True)
     return visit_frequency_summary_df
 
-def calculate_and_print_repeat_frequencies(traffic, locations):
-    """
-    Main function to get details of repeat visits for all locations.
 
+
+def calculate_and_return_repeat_frequencies(traffic, locations):
+    """
+    Modified function to calculate repeat visit details and return summaries.
+
+    Parameters:
+    traffic (DataFrame): DataFrame containing traffic data.
+    locations (DataFrame): DataFrame containing location data with geometry.
+
+    Returns:
+    dict, DataFrame: Dictionary with location names as keys and repeat visit counts as values,
+                     DataFrame containing visit frequency details.
     """
 
     # Preprocess data
@@ -131,17 +142,46 @@ def calculate_and_print_repeat_frequencies(traffic, locations):
     # Get details of repeat visits for each location
     repeat_visits_df, repeat_visits_summary = get_repeat_visits_df(traffic, locations)
 
-    # Print the details of repeat visits
-    print("Repeat visits summary:", repeat_visits_summary)
-
     # Calculate visit frequencies
     if not repeat_visits_df.empty:
         visit_frequency_summary_df = calculate_visit_frequencies(repeat_visits_df)
-        print(visit_frequency_summary_df)
-        return visit_frequency_summary_df
+        return repeat_visits_summary, visit_frequency_summary_df
     else:
-        print("No visit frequencies to summarize.")
+        return repeat_visits_summary, pd.DataFrame()
 
+def generate_combined_top10_plot(repeat_visits_summary, visit_frequency_summary_df, output_jpg):
+    """
+    Generate combined top 10 plots for each location based on repeat visit summary and visit frequency data.
+
+    Parameters:
+    repeat_visits_summary (dict): Dictionary with location names as keys and repeat visit counts as values.
+    visit_frequency_summary_df (DataFrame): DataFrame containing visit frequency details.
+    output_jpg (str): Output file name for the combined JPEG.
+    """
+    # Initialize the plot with subplots
+    fig, axes = plt.subplots(3, 1, figsize=(10, 15))
+
+    # Iterate over each location and plot top 10 visit frequencies
+    for i, (location, _) in enumerate(repeat_visits_summary.items()):
+        # Filter visit frequency data for the current location
+        location_df = visit_frequency_summary_df[visit_frequency_summary_df['LOCATION'] == location]
+
+        # Select top 10 results based on percentage
+        top10_locations = location_df.groupby('VISIT_COUNT').sum().nlargest(10, 'PERCENTAGE').reset_index()
+
+        # Plotting on current subplot
+        sns.barplot(x='VISIT_COUNT', y='PERCENTAGE', data=top10_locations, palette='viridis', ax=axes[i])
+        axes[i].set_title(f'Top 10 Visit Frequencies for Location: {location}')
+        axes[i].set_xlabel('Visit Count')
+        axes[i].set_ylabel('Percentage (%)')
+        axes[i].tick_params(axis='x', rotation=45)
+
+    # Tight layout
+    plt.tight_layout()
+
+    # Save the plot as JPEG file
+    plt.savefig(output_jpg)
+    plt.close()  # Close the plot to free memory
 
 if __name__ == "__main__":
     # Define the path to the traffic CSV file
@@ -152,4 +192,8 @@ if __name__ == "__main__":
 
     traffic, locations = load_data(traffic_path, locations_path)
 
-    calculate_and_print_repeat_frequencies(traffic, locations)
+    # Calculate repeat frequencies and get summaries
+    repeat_visits_summary, visit_frequency_summary_df = calculate_and_return_repeat_frequencies(traffic, locations)
+
+    # Generate top 10 plots for each location and save as single JPEG
+    generate_top10_plots(repeat_visits_summary, visit_frequency_summary_df, 'top10_visit_frequencies.jpg')

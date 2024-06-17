@@ -10,7 +10,7 @@ from unidecode import unidecode
 def append_to_pdf(pdf, content):
     if isinstance(content, str):
         pdf.set_font("Arial", size=12)
-        pdf.add_page()  # Always add a new page for text content
+        pdf.add_page()
         pdf.multi_cell(0, 10, txt=content)
         pdf.ln()
     elif isinstance(content, dict) and 'path' in content and content['path'].lower().endswith('.jpg'):
@@ -53,8 +53,8 @@ def create_pdf(contents, output_file):
     new_page_added = False  # Flag to track if a new page has been added
 
     for content in contents:
-        if isinstance(content, dict) and 'path' in content and content['path'].lower().endswith('.jpg'):
-            pdf.add_page()  # Dodanie nowej strony przed dodaniem obrazka
+        if isinstance(content, dict) and 'path' in content and isinstance(content['path'], str) and content['path'].lower().endswith('.jpg'):
+            pdf.add_page()  # Add a new page before adding the image
             append_to_pdf(pdf, content)
         elif content == 'new_page':
             pdf.add_page()
@@ -168,7 +168,9 @@ def main():
     traffic_structure_output_file = PATHS['jpg_output']['traffic_structure']
     demographic_structure_output_file = PATHS['jpg_output']['demographic_structure']
     location_for_population_analysis = PATHS['analysis']['location_for_population_analysis']
-    buildings_analysis_prefix = PATHS['jpg_output']['buildings_analysis_prefix']
+    buildings_analysis = PATHS['jpg_output']['buildings_analysis']
+    matrix_jpg = PATHS['jpg_output']['matrix']
+    top10_visit_frequencies_jpg = PATHS['jpg_output']['top10_visit_frequencies']
     work_location = PATHS['analysis']['user_work_location']
     commute_location = PATHS['analysis']['user_commute_location']
     home_location = PATHS['analysis']['user_home_location']
@@ -178,21 +180,25 @@ def main():
     if not traffic.empty and not locations.empty:
 
 
-        content.append(f"Creating an analysis of:\n")
-
-        content[0]  = content[0] + f"Movements between given locations:\n"
-        content[0]  = content[0] + str(co_visitation.create_matrix(
+        print("Creating an analysis of:")
+        print("Movements between given locations:")
+        matrix = co_visitation.create_matrix(
             traffic,
-            locations))
-        print(content[-1])
+            locations,
+            plot=args.plot,
+            output_file=matrix_jpg)
+        print(matrix)
+        content.append({'path': matrix_jpg})
 
-        content.append(f"Repeatability of mobile signals:\n")
-        content[1] = content[1] + str(repeatability.calculate_and_print_repeat_frequencies(
+        print("Repeatability of mobile signals:")
+        repeat_visits_summary, visit_frequency_summary_df  = repeatability.calculate_and_return_repeat_frequencies(
             traffic,
-            locations))
-        print(content[-1])
+            locations)
+        repeatability.generate_combined_top10_plot(repeat_visits_summary, visit_frequency_summary_df, top10_visit_frequencies_jpg)
+        content.append({'path': top10_visit_frequencies_jpg})
+        print(visit_frequency_summary_df)
 
-        print(f"3. Hourly traffic structure:\n")
+        print("Hourly traffic structure:")
         traffic_structure.process_and_plot_traffic_data(
             traffic,
             locations,
@@ -200,7 +206,7 @@ def main():
             output_jpg=traffic_structure_output_file)
         content.append({'path': traffic_structure_output_file})
 
-        print(f"4. Show the demographic structure:\n")
+        print("Show the demographic structure:")
         demographic_structure.analyze_and_plot_population_data(
             population,
             locations,
@@ -209,7 +215,7 @@ def main():
             output_file=demographic_structure_output_file)
         content.append({'path': demographic_structure_output_file})
 
-        print(f"5. Characteristics of buildings:\n")
+        print("Characteristics of buildings:")
         location_names = PATHS['analysis']['location_for_buildings_analysis'].split(',')
         print(location_names)
         print(content[-1])
@@ -218,12 +224,11 @@ def main():
             locations,
             location_names,
             save_to_file=args.plot,
-            prefix=buildings_analysis_prefix
+            output_file=buildings_analysis
         )
-        for location in location_names:
-            sanitized_location = unidecode(location).replace(' ', '_')  # Remove diacritics and replace spaces with underscores
-            content.append({'path': buildings_analysis_prefix + sanitized_location + '.jpg'})
-            #content.append('new_page')  # Dodanie oznaczenia nowej strony
+
+        content.append({'path': buildings_analysis})
+
         content.append(f"Estimating the likely place of residence and work\n")
 
         work_estimation = residence_work.analyze_travel_and_users(
@@ -236,8 +241,6 @@ def main():
 
         content[-1] = content[-1] + f"\nEstimated number users commuting between {work_location} and {commute_location} and probably works in {work_location}:\n"
         content[-1] = content[-1] + str(len(work_estimation['estimated_locations'])) + f'\n'
-        content[-1] = content[-1] + f"Number of trips between these locations:\n"
-        content[-1] = content[-1] + str(len(work_estimation['travel'])) + f'\n'
 
         residence_estimation = residence_work.analyze_travel_and_users(
             traffic,
@@ -249,14 +252,12 @@ def main():
 
         content[-1] = content[-1] + f"\nEstimated number users commuting between {home_location} and {commute_location} and probably living in {home_location}:\n"
         content[-1] = content[-1] + str(len(residence_estimation['estimated_locations'])) + f'\n'
-        content[-1] = content[-1] + f"Number of trips between these locations:\n"
-        content[-1] = content[-1] + str(len(residence_estimation['travel'])) + f'\n'
         print(content[-1])
     else:
         print("One or more required dataframes are empty. Please check your data files.")
 
     if args.pdf:
-        create_pdf(content, 'analysis_output.pdf')
+        create_pdf(content, 'analysis_output_1.pdf')
 
 if __name__ == "__main__":
     main()

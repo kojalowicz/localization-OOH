@@ -5,20 +5,21 @@ import seaborn as sns
 import re
 from unidecode import unidecode
 
-def analyze_and_display_buildings(building_data, locations, selected_locations, save_to_file=False, prefix=""):
+def analyze_and_display_buildings(building_data, locations, selected_locations, save_to_file=False, output_file=""):
     analysis_results = {}
+
     for location_name in selected_locations:
         if location_name in locations['location'].values:
             buildings_in_location = analyze_buildings_in_location(building_data, locations, location_name)
-            analysis_results[location_name] = buildings_in_location
+            analysis_results[location_name] = (buildings_in_location, buildings_in_location.shape[0])
+
             print(f"\nAnalysis Result for {location_name}:")
             print(buildings_in_location)
-
-            # Generate and save analysis plot if save_to_file is True
-            if save_to_file:
-                save_analysis_plot(buildings_in_location, location_name, prefix)
         else:
             print(f"Location '{location_name}' not found in locations data.")
+
+    if save_to_file:
+        merge_and_save_plots(analysis_results, output_file)
 
     return analysis_results
 
@@ -52,44 +53,38 @@ def filter_buildings_by_location(building_data, locations, location_name):
 
     return buildings_in_location
 
-def save_analysis_plot(buildings_in_location, location_name, prefix=""):
+def save_analysis_plot(ax, buildings_in_location, location_name, total_buildings):
     # Convert CamelCase to words with spaces before capital letters
     def camelcase_to_words(text):
-        # Regular expression to split capital letters, handling 2 or more capital letters
         text = re.sub(r'([a-z])([A-Z])', r'\1 \2', text)
         text = re.sub(r'([A-Z])([A-Z][a-z])', r'\1 \2', text)
         text = re.sub(r'([A-Z])([A-Z])', r'\1 \2', text)
         return text.lower()
 
-    # Apply the function to the FUNOGOLNABUDYNKU_DESC column
-    buildings_in_location['FUNOGOLNABUDYNKU_DESC'] = buildings_in_location['FUNOGOLNABUDYNKU_DESC'].apply(camelcase_to_words)
-
-    plt.figure(figsize=(10, 6))
-    ax = sns.countplot(y='FUNOGOLNABUDYNKU_DESC', data=buildings_in_location, order=buildings_in_location['FUNOGOLNABUDYNKU_DESC'].value_counts().index)
+    ax.set_title(f"Building Types Distribution in {location_name} (Total: {total_buildings} buildings)")
+    ax.set_xlabel("")
+    ax.set_ylabel("Building Type")
+    ax.set_xticklabels([])
 
     # Add the number at the end of each bar
     for p in ax.patches:
         ax.annotate(f"{int(p.get_width())}", (p.get_width(), p.get_y() + p.get_height() / 2), ha='left', va='center')
 
-    # Remove values from the x-axis
-    ax.set_xticklabels([])
+def merge_and_save_plots(locations_analysis_results, output_file=""):
+    fig, axs = plt.subplots(len(locations_analysis_results), figsize=(12, 8))
 
-    # Total number of buildings
-    total_buildings = buildings_in_location.shape[0]
-
-    # Updated plot title
-    plt.title(f"Building Types Distribution in {location_name} (Total: {total_buildings} buildings)")
-    plt.xlabel("")
-    plt.ylabel("Building Type")
+    for i, (location_name, (buildings_in_location, total_buildings)) in enumerate(locations_analysis_results.items()):
+        ax = axs[i] if len(locations_analysis_results) > 1 else axs
+        sns.countplot(y='FUNOGOLNABUDYNKU_DESC', data=buildings_in_location,
+                      order=buildings_in_location['FUNOGOLNABUDYNKU_DESC'].value_counts().index, ax=ax)
+        save_analysis_plot(ax, buildings_in_location, location_name, total_buildings)
 
     plt.tight_layout()
 
     # Prepare filename without Polish characters and spaces replaced by underscores
-    filename = f"{prefix}{unidecode(location_name).replace(' ', '_')}.jpg"
-
-    # Save plot to file
+    filename = output_file
     plt.savefig(filename)
-    print(f"Saved analysis plot as {filename}")
+    print(f"Saved combined analysis plot as {filename}")
     plt.close()
 
 if __name__ == "__main__":

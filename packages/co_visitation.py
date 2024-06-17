@@ -1,7 +1,9 @@
 import pandas as pd
 from shapely.geometry import Point
-from shapely import wkt, wkb
+from shapely import wkb
 import shapely
+import matplotlib.pyplot as plt
+from PIL import Image
 
 def preprocess_data(traffic, locations):
     """
@@ -39,7 +41,7 @@ def add_location_columns(traffic, locations):
 
 def calculate_co_visitation(traffic, locations):
     """
-    Calculate and print the co-visitation matrix.
+    Calculate and return the co-visitation matrix.
     """
     if 'user_id' in traffic.columns:
         visit_counts = traffic.groupby('user_id').sum()
@@ -57,18 +59,43 @@ def calculate_co_visitation(traffic, locations):
                 else:
                     co_visit_matrix.loc[loc1, loc2] = co_visits[co_visits[loc1] > 0].shape[0]
 
-        return co_visit_matrix
+        return co_visit_matrix.astype(float)  # Ensure all data is numeric
     else:
         print("The 'user_id' column does not exist in the 'traffic' data")
 
-def create_matrix(traffic, locations):
+def create_matrix(traffic, locations, plot=False, output_file='co_visitation_matrix.jpg', title='Movements between given locations'):
     traffic, locations = preprocess_data(traffic, locations)
     traffic = add_location_columns(traffic, locations)
-    return calculate_co_visitation(traffic, locations)
+    co_visit_matrix = calculate_co_visitation(traffic, locations)
+
+    if plot:
+        # Plotting the co-visitation matrix
+        plt.figure(figsize=(10, 8))
+        plt.imshow(co_visit_matrix.values, cmap='Blues', interpolation='nearest')
+        plt.title(title)
+        plt.colorbar()
+        plt.xticks(range(len(co_visit_matrix)), co_visit_matrix.columns, rotation=45)
+        plt.yticks(range(len(co_visit_matrix)), co_visit_matrix.index)
+
+        # Add text annotations for travel values in the center of each cell
+        for i in range(len(co_visit_matrix)):
+            for j in range(len(co_visit_matrix)):
+                plt.text(j, i, f'{co_visit_matrix.iloc[i, j]:.0f}', ha='center', va='center', color='black')
+
+        plt.tight_layout()
+
+        # Save plot as a JPG image
+        plt.savefig(output_file)
+        plt.close()
+
+        print(f"Co-visitation matrix saved as {output_file}")
+        return co_visit_matrix
+    else:
+        print(co_visit_matrix)
 
 if __name__ == "__main__":
     traffic_path = 'traffic.csv'
     traffic = pd.read_csv(traffic_path)
     locations_path = 'locations.parquet'
     locations = pd.read_parquet(locations_path)
-    create_matrix(traffic, locations)
+    create_matrix(traffic, locations, plot=True)
